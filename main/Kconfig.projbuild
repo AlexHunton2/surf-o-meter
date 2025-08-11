@@ -1,0 +1,20 @@
+menu "Wi-Fi Configuration"
+
+config WIFI_SSID
+    string "Wi-Fi SSID"
+    default "ssid"
+
+config WIFI_PASS
+    string "Wi-Fi Password"
+    default "password"
+
+endmenu
+
+menu "OTA Configuration"
+
+config OTA_URL
+    string "OTA URL"
+    default "https://github.com/<GITHUB_USER>/<GITHUB_REPO>/releases/latest/download/firmware.bin"
+
+endmenu
+
