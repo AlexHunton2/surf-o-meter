@@ -34,7 +34,7 @@ jobs:
         id: find_bin
         run: |
           # Change 'my_project.bin' to the name of your actual firmware output
-          BIN_PATH=$(find build -type f -name "*.bin" | grep -E "/my_project.bin$")
+          BIN_PATH=$(find build -type f -name "*.bin" | grep -E "/surf-o-meter.bin$")
           if [ -z "$BIN_PATH" ]; then
             echo "Main firmware bin not found!"
             exit 1
