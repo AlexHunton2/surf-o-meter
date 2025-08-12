@@ -10,17 +10,12 @@
 #include "nvs_flash.h"
 #include <stdio.h>
 
+#include "ota.h"
+
 #define WIFI_SSID CONFIG_WIFI_SSID
 #define WIFI_PASS CONFIG_WIFI_PASS
-#define OTA_URL CONFIG_OTA_URL
 
 static const char *TAG = "MAIN";
-
-/* Embed the server certificate in the binary */
-extern const uint8_t
-    ca_cert_pem_start[] asm("_binary_digicert_global_root_g2_pem_start");
-extern const uint8_t
-    ca_cert_pem_end[] asm("_binary_digicert_global_root_g2_pem_end");
 
 static void wifi_init(void) {
   esp_netif_init();
@@ -49,27 +44,26 @@ static void wifi_init(void) {
   }
 }
 
-static void ota_update_task(void *pvParameter) {
-  ESP_LOGI(TAG, "Starting OTA update from: %s", OTA_URL);
+static TimerHandle_t ota_timer;
+static char current_tag[64] = "";
 
-  esp_http_client_config_t http_cfg = {
-      .url = OTA_URL,
-      .cert_pem = (const char *)ca_cert_pem_start,
-  };
-
-  esp_https_ota_config_t ota_cfg = {
-      .http_config = &http_cfg,
-  };
-
-  esp_err_t ret = esp_https_ota(&ota_cfg);
-  if (ret == ESP_OK) {
-    ESP_LOGI(TAG, "OTA successful, restarting...");
-    esp_restart();
-  } else {
-    ESP_LOGE(TAG, "OTA failed: %s", esp_err_to_name(ret));
+static void ota_timer_callback(TimerHandle_t xTimer) {
+  // Already updating...
+  if (xTaskGetHandle("ota_update_task") != NULL) {
+    return;
   }
 
-  vTaskDelete(NULL);
+  char latest_tag[64];
+  if (get_latest_github_tag(latest_tag, sizeof(latest_tag))) {
+    if (strcmp(current_tag, latest_tag) != 0) {
+      strcpy(current_tag, latest_tag);
+      xTaskCreate(&ota_update_task, "ota_update_task", 8192, NULL, 5, NULL);
+    } else {
+      ESP_LOGI(TAG, "Software up to date.");
+    }
+  } else {
+    ESP_LOGE(TAG, "Failed to get latest GitHub tag");
+  }
 }
 
 void app_main(void) {
@@ -79,5 +73,10 @@ void app_main(void) {
   /* Wait for WiFi connection before starting OTA */
   vTaskDelay(pdMS_TO_TICKS(5000));
 
-  xTaskCreate(&ota_update_task, "ota_update_task", 8192, NULL, 5, NULL);
+  ota_timer = xTimerCreate("ota_timer",
+                           pdMS_TO_TICKS(120000), // 2 min
+                           pdTRUE,                // auto-reload
+                           NULL, ota_timer_callback);
+
+  xTimerStart(ota_timer, 0);
 }
