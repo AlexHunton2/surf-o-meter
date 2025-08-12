@@ -1,31 +1,67 @@
-name: Build and Release ESP32 Firmware
+name: Build ESP-IDF & Release BIN
 
 on:
   push:
-    tags:
-      - 'v*'
-  workflow_dispatch:
+    branches:
+      - '**'  # Runs on every push; change to ['main'] if you want only main
 
 jobs:
-  build:
+  build-and-release:
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up ESP-IDF
-        uses: espressif/esp-idf-ci-action@v1
-        with:
-          esp_idf_version: v5.1
+      - name: Set version string
+        id: set_version
+        run: |
+          VERSION="$(date -u +%Y%m%d%H%M%S)-${GITHUB_SHA::7}"
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Install ESP-IDF
+        uses: espressif/install-esp-idf-action@v2
 
       - name: Build firmware
         run: |
-          idf.py set-target esp32
+          idf.py fullclean || true
           idf.py build
 
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+      - name: Find main firmware bin
+        id: find_bin
+        run: |
+          # Change 'my_project.bin' to the name of your actual firmware output
+          BIN_PATH=$(find build -type f -name "*.bin" | grep -E "/my_project.bin$")
+          if [ -z "$BIN_PATH" ]; then
+            echo "Main firmware bin not found!"
+            exit 1
+          fi
+          echo "BIN_PATH=$BIN_PATH" >> $GITHUB_ENV
+
+      - name: Create GitHub release
+        id: create_release
+        uses: actions/create-release@v1
         with:
-          files: build/*.bin
+          tag_name: ${{ env.VERSION }}
+          release_name: Firmware ${{ env.VERSION }}
+          body: |
+            Automatic firmware build from commit ${{ github.sha }}
+            Built at (UTC): ${{ env.VERSION }}
+          draft: false
+          prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload firmware bin to release
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ${{ env.BIN_PATH }}
+          asset_name: firmware-${{ env.VERSION }}.bin
+          asset_content_type: application/octet-stream
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
