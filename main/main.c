@@ -43,7 +43,10 @@ static void wifi_init(void) {
   esp_wifi_start();
 
   ESP_LOGI(TAG, "Connecting to WiFi...");
-  esp_wifi_connect();
+  if (esp_wifi_connect() != ESP_OK) {
+    ESP_LOGI(TAG, "Failed to connect to WiFi, restarting...");
+    esp_restart();
+  }
 }
 
 static void ota_update_task(void *pvParameter) {
