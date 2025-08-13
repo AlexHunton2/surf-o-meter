@@ -12,9 +12,17 @@ endmenu
 
 menu "OTA Configuration"
 
-config OTA_URL
-    string "OTA URL"
-    default "https://github.com/<GITHUB_USER>/<GITHUB_REPO>/releases/latest/download/firmware.bin"
+config GITHUB_USER
+    string "Github Username"
+    default "User"
 
-endmenu
+config GITHUB_REPO
+    string "Github Repository Name"
+    default "Repo Name"
+
+config BIN_FILENAME
+    string "Filename of the firmware bin"
+    default "firmware.bin"
+
+  endmenu
 

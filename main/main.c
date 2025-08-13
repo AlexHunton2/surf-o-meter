@@ -3,6 +3,7 @@
 #include "esp_https_ota.h"
 #include "esp_log.h"
 #include "esp_netif.h"
+#include "esp_sntp.h"
 #include "esp_system.h"
 #include "esp_wifi.h"
 #include "freertos/FreeRTOS.h"
@@ -45,24 +46,12 @@ static void wifi_init(void) {
 }
 
 static TimerHandle_t ota_timer;
-static char current_tag[64] = "";
 
 static void ota_timer_callback(TimerHandle_t xTimer) {
-  // Already updating...
-  if (xTaskGetHandle("ota_update_task") != NULL) {
-    return;
-  }
-
-  char latest_tag[64];
-  if (get_latest_github_tag(latest_tag, sizeof(latest_tag))) {
-    if (strcmp(current_tag, latest_tag) != 0) {
-      strcpy(current_tag, latest_tag);
-      xTaskCreate(&ota_update_task, "ota_update_task", 8192, NULL, 5, NULL);
-    } else {
-      ESP_LOGI(TAG, "Software up to date.");
-    }
-  } else {
-    ESP_LOGE(TAG, "Failed to get latest GitHub tag");
+  BaseType_t res =
+      xTaskCreate(&ota_check_task, "ota_check_task", 8192, NULL, 5, NULL);
+  if (res != pdPASS) {
+    ESP_LOGE(TAG, "Failed to create OTA check task");
   }
 }
 
@@ -73,9 +62,17 @@ void app_main(void) {
   /* Wait for WiFi connection before starting OTA */
   vTaskDelay(pdMS_TO_TICKS(5000));
 
+  // Update internal clock
+  esp_sntp_setoperatingmode(SNTP_OPMODE_POLL);
+  esp_sntp_setservername(0, "pool.ntp.org");
+  esp_sntp_init();
+
+  // First OTA attempt:
+  xTaskCreate(&ota_check_task, "ota_check_task", 8192, NULL, 5, NULL);
+
   ota_timer = xTimerCreate("ota_timer",
-                           pdMS_TO_TICKS(120000), // 2 min
-                           pdTRUE,                // auto-reload
+                           pdMS_TO_TICKS(60000), // 1 min
+                           pdTRUE,               // auto-reload
                            NULL, ota_timer_callback);
 
   xTimerStart(ota_timer, 0);
