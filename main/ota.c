@@ -118,7 +118,7 @@ void ota_check_task(void *pvParameter) {
 
   _read_curr_tag(curr_tag, MAX_TAG_SIZE);
 
-  ESP_LOGI(TAG, "Current version: %s", curr_tag);
+  ESP_LOGI(TAG, "Current tag version: %s", curr_tag);
   ESP_LOGI(TAG, "Checking for firmware update...");
 
   if (xTaskGetHandle("ota_update_task") != NULL) {
