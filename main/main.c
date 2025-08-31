@@ -63,20 +63,34 @@ void app_main(void) {
   /* Wait for WiFi connection before starting OTA */
   vTaskDelay(pdMS_TO_TICKS(5000));
 
-  ble_init_and_scan();
-
   // Update internal clock
   esp_sntp_setoperatingmode(SNTP_OPMODE_POLL);
   esp_sntp_setservername(0, "pool.ntp.org");
   esp_sntp_init();
 
-  // First OTA attempt:
-  xTaskCreate(&ota_check_and_update_task, "ota_check_and_update_task", 8192, NULL, 5, NULL);
+  // OTA:
+    #ifdef CONFIG_DEBUG_MODE
+        ESP_LOGI(TAG, "Debug mode is enabled!");
+        char tag_version[MAX_TAG_SIZE];
+        read_curr_tag(tag_version, MAX_TAG_SIZE);
 
-  ota_timer = xTimerCreate("ota_timer",
-                           pdMS_TO_TICKS(3 * 60000), // 3 min
-                           pdTRUE,               // auto-reload
-                           NULL, ota_timer_callback);
+        if (strcmp(tag_version, "DEBUG") != 0) {
+            save_curr_tag("DEBUG");
+        }
+    #else
+        // Attempt OTA
 
-  xTimerStart(ota_timer, 0);
+        // Boot up OTA Attempt
+        xTaskCreate(&ota_check_and_update_task, "ota_check_and_update_task", 8192, NULL, 5, NULL);
+
+        // Callback OTA every so often
+        ota_timer = xTimerCreate("ota_timer",
+                               pdMS_TO_TICKS(3 * 60000), // 3 min
+                               pdTRUE,               // auto-reload
+                               NULL, ota_timer_callback);
+
+        xTimerStart(ota_timer, 0);
+    #endif
+
+    ble_init_and_scan();
 }

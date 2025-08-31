@@ -1,6 +1,6 @@
 #include "som-http.h"
 
-static const char *TAG = "HTTP";
+static const char *TAG = "SOM-HTTP";
 
 // https://github.com/espressif/esp-idf/blob/4e036983a751e4667ade94c8f6f6bf1e7f78eff0/examples/protocols/esp_http_client/main/esp_http_client_example.c
 esp_err_t http_event_handler(esp_http_client_event_t *evt) {

@@ -9,7 +9,7 @@
 
 #define TAG "SOM_BLE"
 
-static esp_gatt_if_t gattc_if;
+static esp_gatt_if_t s_gattc_if;
 
 static void esp_gap_cb(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param);
 static void esp_gattc_cb(esp_gattc_cb_event_t event, esp_gatt_if_t gattc_if, esp_ble_gattc_cb_param_t *param);
@@ -98,7 +98,7 @@ static void esp_gap_cb(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *par
                         if (strncmp((char *)adv_name, "CoolLEDX", adv_name_len) == 0 || strncmp((char *)adv_name, "CoolLEDM", adv_name_len) == 0) {
                             ESP_LOGI(TAG, "Found CoolLED device!");
                             esp_ble_gap_stop_scanning();
-                            esp_ble_gattc_open(gattc_if, scan_result->scan_rst.bda, BLE_ADDR_TYPE_PUBLIC, true);
+                            esp_ble_gattc_open(s_gattc_if, scan_result->scan_rst.bda, BLE_ADDR_TYPE_PUBLIC, true);
                         }
                     }
                     break;
@@ -115,6 +115,10 @@ static void esp_gap_cb(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *par
 
 static void esp_gattc_cb(esp_gattc_cb_event_t event, esp_gatt_if_t gattc_if, esp_ble_gattc_cb_param_t *param) {
     switch (event) {
+        case ESP_GATTC_REG_EVT:
+            ESP_LOGI(TAG, "REG_EVT, gattc_if = %d", gattc_if);
+            s_gattc_if = gattc_if;
+            break;
         case ESP_GATTC_OPEN_EVT:
             ESP_LOGI(TAG, "Connected to CoolLED device!");
             break;

@@ -1,3 +1,13 @@
+menu "Debug Configuration"
+
+    config DEBUG_MODE
+        bool "Enable debug mode"
+        default n
+        help
+            Enable this to activate debug mode for the application.
+
+endmenu
+
 menu "Wi-Fi Configuration"
 
 config WIFI_SSID
@@ -25,4 +35,3 @@ config BIN_FILENAME
     default "firmware.bin"
 
   endmenu
-

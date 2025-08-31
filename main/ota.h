@@ -26,5 +26,7 @@
 
 void ota_update_task(void *pvParameter);
 void ota_check_and_update_task(void *pvParameter);
+esp_err_t save_curr_tag(const char *tag);
+esp_err_t read_curr_tag(char *tag, size_t max_len);
 
 #endif

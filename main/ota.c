@@ -33,7 +33,7 @@ void ota_update_task(void *pvParameter) {
   vTaskDelete(NULL);
 }
 
-esp_err_t _save_curr_tag(const char *tag) {
+esp_err_t save_curr_tag(const char *tag) {
   nvs_handle_t handle;
   esp_err_t err = nvs_open("storage", NVS_READWRITE, &handle);
   if (err != ESP_OK)
@@ -47,7 +47,7 @@ esp_err_t _save_curr_tag(const char *tag) {
   return err;
 }
 
-esp_err_t _read_curr_tag(char *tag, size_t max_len) {
+esp_err_t read_curr_tag(char *tag, size_t max_len) {
   nvs_handle_t handle;
   esp_err_t err = nvs_open("storage", NVS_READONLY, &handle);
   if (err != ESP_OK)
@@ -116,7 +116,7 @@ void ota_check_and_update_task(void *pvParameter) {
   char latest_tag[MAX_TAG_SIZE];
   char curr_tag[MAX_TAG_SIZE];
 
-  _read_curr_tag(curr_tag, MAX_TAG_SIZE);
+  read_curr_tag(curr_tag, MAX_TAG_SIZE);
 
   ESP_LOGI(TAG, "Current tag version: %s", curr_tag);
   ESP_LOGI(TAG, "Checking for firmware update...");
@@ -129,7 +129,7 @@ void ota_check_and_update_task(void *pvParameter) {
 
   if (_get_latest_github_tag(latest_tag, sizeof(latest_tag))) {
     if (strcmp(curr_tag, latest_tag) != 0) {
-      _save_curr_tag(latest_tag);
+      save_curr_tag(latest_tag);
       xTaskCreate(&ota_update_task, "ota_update_task", 8192, latest_tag, 5,
                   NULL);
     } else {
