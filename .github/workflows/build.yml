@@ -15,6 +15,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          submodules 'recursive'
 
       - name: Set version string
         id: set_version
@@ -22,13 +24,11 @@ jobs:
           VERSION="$(date -u +%Y%m%d%H%M%S)-${GITHUB_SHA::7}"
           echo "VERSION=$VERSION" >> $GITHUB_ENV
 
-      - name: Install ESP-IDF
-        uses: espressif/install-esp-idf-action@v1
-
-      - name: Build firmware
-        run: |
-          idf.py fullclean || true
-          idf.py build
+      - name: ESP-IDF Build
+        uses: espressif/esp-idf-ci-action@v1
+        with:
+          esp_idf_version: v4.4
+          target: esp32
 
       - name: Find main firmware bin
         id: find_bin

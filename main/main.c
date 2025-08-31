@@ -12,6 +12,7 @@
 #include <stdio.h>
 
 #include "ota.h"
+#include "som-ble.h"
 
 #define WIFI_SSID CONFIG_WIFI_SSID
 #define WIFI_PASS CONFIG_WIFI_PASS
@@ -58,6 +59,8 @@ static void ota_timer_callback(TimerHandle_t xTimer) {
 void app_main(void) {
   ESP_ERROR_CHECK(nvs_flash_init());
   wifi_init();
+
+  ble_init_and_scan();
 
   /* Wait for WiFi connection before starting OTA */
   vTaskDelay(pdMS_TO_TICKS(5000));
