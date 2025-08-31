@@ -4,6 +4,7 @@
 static const char *TAG = "OTA";
 
 void ota_update_task(void *pvParameter) {
+  const char *latest_tag = (const char *)pvParameter;
 #define OTA_URL                                                                \
   GITHUB_URL GITHUB_USER "/" GITHUB_REPO "/" LATEST_DOWNLOAD_PATH BIN_FILENAME
 
@@ -24,7 +25,8 @@ void ota_update_task(void *pvParameter) {
 
   esp_err_t ret = esp_https_ota(&ota_cfg);
   if (ret == ESP_OK) {
-    ESP_LOGI(TAG, "OTA successful, restarting...");
+    ESP_LOGI(TAG, "OTA successful saving latest_tag as %s, restarting...", latest_tag);
+    save_curr_tag(latest_tag);
     esp_restart();
   } else {
     ESP_LOGE(TAG, "OTA failed: %s", esp_err_to_name(ret));
@@ -129,7 +131,6 @@ void ota_check_and_update_task(void *pvParameter) {
 
   if (_get_latest_github_tag(latest_tag, sizeof(latest_tag))) {
     if (strcmp(curr_tag, latest_tag) != 0) {
-      save_curr_tag(latest_tag);
       xTaskCreate(&ota_update_task, "ota_update_task", 8192, latest_tag, 5,
                   NULL);
     } else {
