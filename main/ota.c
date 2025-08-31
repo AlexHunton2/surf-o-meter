@@ -1,5 +1,6 @@
 #include "ota.h"
 #include "esp_http_client.h"
+#include <stdlib.h> // For strdup() and free()
 
 static const char *TAG = "OTA";
 
@@ -32,6 +33,7 @@ void ota_update_task(void *pvParameter) {
     ESP_LOGE(TAG, "OTA failed: %s", esp_err_to_name(ret));
   }
 
+  free((char *)latest_tag); // Free the allocated memory
   vTaskDelete(NULL);
 }
 
@@ -131,7 +133,13 @@ void ota_check_and_update_task(void *pvParameter) {
 
   if (_get_latest_github_tag(latest_tag, sizeof(latest_tag))) {
     if (strcmp(curr_tag, latest_tag) != 0) {
-      xTaskCreate(&ota_update_task, "ota_update_task", 8192, latest_tag, 5,
+      char *tag_copy = strdup(latest_tag);
+      if (tag_copy == NULL) {
+        ESP_LOGE(TAG, "Failed to allocate memory for tag copy");
+        vTaskDelete(NULL);
+        return;
+      }
+      xTaskCreate(&ota_update_task, "ota_update_task", 8192, tag_copy, 5,
                   NULL);
     } else {
       ESP_LOGI(TAG, "Software up to date.");
