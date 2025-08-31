@@ -25,6 +25,6 @@
 #define MAX_TAG_SIZE 64
 
 void ota_update_task(void *pvParameter);
-void ota_check_task(void *pvParameter);
+void ota_check_and_update_task(void *pvParameter);
 
 #endif

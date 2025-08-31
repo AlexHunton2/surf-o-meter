@@ -49,7 +49,7 @@ static TimerHandle_t ota_timer;
 
 static void ota_timer_callback(TimerHandle_t xTimer) {
   BaseType_t res =
-      xTaskCreate(&ota_check_task, "ota_check_task", 8192, NULL, 5, NULL);
+      xTaskCreate(&ota_check_and_update_task, "ota_check_and_update_task", 8192, NULL, 5, NULL);
   if (res != pdPASS) {
     ESP_LOGE(TAG, "Failed to create OTA check task");
   }
@@ -68,10 +68,10 @@ void app_main(void) {
   esp_sntp_init();
 
   // First OTA attempt:
-  xTaskCreate(&ota_check_task, "ota_check_task", 8192, NULL, 5, NULL);
+  xTaskCreate(&ota_check_and_update_task, "ota_check_and_update_task", 8192, NULL, 5, NULL);
 
   ota_timer = xTimerCreate("ota_timer",
-                           pdMS_TO_TICKS(60000), // 1 min
+                           pdMS_TO_TICKS(3 * 60000), // 3 min
                            pdTRUE,               // auto-reload
                            NULL, ota_timer_callback);
 

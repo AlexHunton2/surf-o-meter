@@ -112,7 +112,7 @@ bool _get_latest_github_tag(char *tag_buf, size_t buf_size) {
   return true;
 }
 
-void ota_check_task(void *pvParameter) {
+void ota_check_and_update_task(void *pvParameter) {
   char latest_tag[MAX_TAG_SIZE];
   char curr_tag[MAX_TAG_SIZE];
 
