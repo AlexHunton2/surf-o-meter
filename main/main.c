@@ -60,10 +60,10 @@ void app_main(void) {
   ESP_ERROR_CHECK(nvs_flash_init());
   wifi_init();
 
-  ble_init_and_scan();
-
   /* Wait for WiFi connection before starting OTA */
   vTaskDelay(pdMS_TO_TICKS(5000));
+
+  ble_init_and_scan();
 
   // Update internal clock
   esp_sntp_setoperatingmode(SNTP_OPMODE_POLL);
